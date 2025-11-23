@@ -6,9 +6,16 @@
     <title>India Governance Map 2025</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
+        /* ========================================
+           INDIA GOVERNANCE MAP 2025 - STYLES
+           Modern glassmorphism design with responsive layout
+           ======================================== */
+
         /* --- 1. GLOBAL & LAYOUT --- */
+        /* Base styles for full-screen map application */
         body, html {
             height: 100%;
             margin: 0;
@@ -152,6 +159,160 @@
         .leaflet-tooltip-top:before, .leaflet-tooltip-bottom:before,
         .leaflet-tooltip-left:before, .leaflet-tooltip-right:before { display: none; }
 
+        /* --- 4. SYSTEM REGISTRY OVERLAY --- */
+        /* System Registry: Hidden overlay activated by key combination C+O+2 */
+        #system-registry {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 10000; /* Above all other elements */
+            display: none;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #system-registry.visible {
+            opacity: 1;
+        }
+
+        /* Registry Window: Glassmorphic terminal-style window */
+        .registry-window {
+            width: 450px;
+            max-width: 90%;
+            background: rgba(10, 10, 10, 0.95);
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            box-shadow: 0 0 40px rgba(0, 255, 204, 0.15);
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            color: #00ffcc;
+            overflow: hidden;
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        #system-registry.visible .registry-window {
+            transform: scale(1);
+        }
+
+        /* Registry Header */
+        .reg-header {
+            background: rgba(0, 255, 204, 0.1);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 255, 204, 0.2);
+        }
+
+        .reg-title {
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .reg-close {
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            transition: 0.2s;
+            font-weight: bold;
+            user-select: none;
+        }
+
+        .reg-close:hover {
+            color: #ff3333;
+        }
+
+        /* Registry Content */
+        .reg-content {
+            padding: 30px;
+        }
+
+        .reg-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            font-size: 13px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 5px;
+        }
+
+        .reg-label {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .reg-val {
+            color: #eee;
+            font-weight: 600;
+            text-shadow: 0 0 5px rgba(255,255,255,0.2);
+        }
+
+        /* Blinking cursor effect for terminal feel */
+        .blink {
+            animation: blinker 1s linear infinite;
+        }
+
+        @keyframes blinker {
+            50% { opacity: 0; }
+        }
+
+        /* Feature list section */
+        .reg-features {
+            margin-top: 25px;
+            font-size: 12px;
+            color: #888;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 15px;
+        }
+
+        .reg-features h4 {
+            color: #00ffcc;
+            margin-bottom: 10px;
+            margin-top: 0;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        .reg-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .reg-list li::before {
+            content: "> ";
+            color: #00ffcc;
+            font-weight: bold;
+        }
+
+        /* Mobile responsiveness for registry */
+        @media (max-width: 768px) {
+            .registry-window {
+                width: 95%;
+            }
+            
+            .reg-content {
+                padding: 20px;
+            }
+            
+            .reg-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -168,26 +329,77 @@
 
     <div id="map"></div>
 
+    <!-- SYSTEM REGISTRY OVERLAY -->
+    <!-- Activated by holding C+O+2 keys for 2 seconds -->
+    <div id="system-registry">
+        <div class="registry-window">
+            <div class="reg-header">
+                <div class="reg-title">SYSTEM REGISTRY</div>
+                <div class="reg-close" onclick="closeRegistry()">[X]</div>
+            </div>
+            <div class="reg-content">
+                <div class="reg-row">
+                    <span class="reg-label">SYSTEM STATUS</span>
+                    <span class="reg-val" style="color:#00ffcc">ONLINE</span>
+                </div>
+                <div class="reg-row">
+                    <span class="reg-label">CURRENT VERSION</span>
+                    <span class="reg-val">v6.0 (Integrated) <span class="blink">_</span></span>
+                </div>
+                <div class="reg-row">
+                    <span class="reg-label">ORIGIN DATE</span>
+                    <span class="reg-val">24 NOV, 2025</span>
+                </div>
+                <div class="reg-row">
+                    <span class="reg-label">AUTHOR</span>
+                    <span class="reg-val">ANACONDY</span>
+                </div>
+
+                <div class="reg-features">
+                    <h4>SYSTEM MODULES</h4>
+                    <ul class="reg-list">
+                        <li>Glassmorphism Core</li>
+                        <li>Secure Access Key</li>
+                        <li>Responsive Grid</li>
+                        <li>Animation Engine</li>
+                        <li>Mobile Swipe UI</li>
+                        <li>Interactive Map</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // --- 1. SETUP MAP ---
+        // ========================================
+        // INDIA GOVERNANCE MAP 2025
+        // Interactive map showing political control across Indian states
+        // ========================================
+
+        // --- 1. MAP INITIALIZATION ---
+        // Initialize Leaflet map with custom settings
         var map = L.map('map', {
-            zoomControl: false,
-            attributionControl: false,
-            center: [22.5, 82],
-            zoom: 5,
-            zoomSnap: 0.5
+            zoomControl: false,           // Disable default zoom controls for cleaner UI
+            attributionControl: false,    // Remove attribution for minimal design
+            center: [22.5, 82],           // Center on India (latitude, longitude)
+            zoom: 5,                      // Initial zoom level
+            zoomSnap: 0.5                 // Allow smoother zoom transitions
         });
 
+        // Add dark theme tile layer from CartoDB
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             subdomains: 'abcd',
             maxZoom: 19
         }).addTo(map);
 
-        // --- GLOBAL VARIABLE FOR SELECTION ---
+        // --- GLOBAL VARIABLES ---
+        // Track currently selected state layer for persistent highlighting
         var selectedLayer = null;
 
-        // --- 2. DATA ---
+        // --- 2. POLITICAL DATA ---
+        // Political control data for all Indian states and union territories
+        // Code: N = NDA Alliance, I = INDIA Alliance, O = Other/Regional
         const politicalData = {
             "Maharashtra": { code: "N", cm: "Devendra Fadnavis", party: "BJP / Mahayuti", seats: "235 / 288" },
             "Gujarat": { code: "N", cm: "Bhupendrabhai Patel", party: "BJP", seats: "156 / 182" },
@@ -223,18 +435,31 @@
             "Meghalaya": { code: "N", cm: "Conrad Sangma", party: "NPP (NDA)", seats: "26 / 60" }
         };
 
-        // --- 3. STYLING ---
+        // --- 3. MAP STYLING FUNCTIONS ---
+        
+        /**
+         * Get color based on political alliance
+         * @param {string} stateName - Name of the state
+         * @returns {string} - Hex color code for the alliance
+         */
         function getColor(stateName) {
+            // Normalize state names (handle alternate spellings in GeoJSON data)
             if(stateName === "Orissa") stateName = "Odisha";
             if(stateName === "Uttaranchal") stateName = "Uttarakhand";
+            
             const data = politicalData[stateName];
-            if (!data) return '#333';
-            if (data.code === 'N') return '#FF9933';
-            if (data.code === 'I') return '#00E5FF';
-            if (data.code === 'O') return '#FFFF00';
+            if (!data) return '#333';              // Default gray for unknown states
+            if (data.code === 'N') return '#FF9933'; // Saffron for NDA
+            if (data.code === 'I') return '#00E5FF'; // Cyan for INDIA bloc
+            if (data.code === 'O') return '#FFFF00'; // Yellow for Other/Regional
             return '#333';
         }
 
+        /**
+         * Define style for each state polygon
+         * @param {object} feature - GeoJSON feature object
+         * @returns {object} - Style configuration for the feature
+         */
         function style(feature) {
             let name = feature.properties.NAME_1 || feature.properties.st_nm;
             if(name === "Orissa") name = "Odisha";
@@ -252,34 +477,42 @@
             };
         }
 
-        // --- 4. SWIPE LOGIC ---
+        // --- 4. MOBILE SWIPE INTERACTION ---
+        // Enable swipe-down gesture to close sidebar on mobile devices
+        
         const sidebar = document.getElementById('sidebar');
-        let startY = 0;
-        let currentY = 0;
-        let isDragging = false;
+        let startY = 0;      // Touch start position
+        let currentY = 0;    // Current touch position
+        let isDragging = false; // Track drag state
 
+        // Touch start: Initialize drag tracking
         sidebar.addEventListener('touchstart', (e) => {
-            if (!sidebar.classList.contains('active')) return;
+            if (!sidebar.classList.contains('active')) return; // Only track if sidebar is open
             startY = e.touches[0].clientY;
             isDragging = true;
-            sidebar.style.transition = 'none';
-        }, { passive: true });
+            sidebar.style.transition = 'none'; // Disable transition for smooth dragging
+        }, { passive: true }); // Passive for better scroll performance
 
+        // Touch move: Follow finger movement
         sidebar.addEventListener('touchmove', (e) => {
             if (!isDragging) return;
             currentY = e.touches[0].clientY;
-            const deltaY = currentY - startY;
+            const deltaY = currentY - startY; // Calculate drag distance
+            
+            // Only allow downward drag (positive deltaY)
             if (deltaY > 0) {
                 sidebar.style.transform = `translateY(${deltaY}px)`;
             }
         }, { passive: true });
 
+        // Touch end: Determine if sidebar should close based on drag distance
         sidebar.addEventListener('touchend', () => {
             if (!isDragging) return;
             isDragging = false;
             sidebar.style.transition = 'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)';
 
             const deltaY = currentY - startY;
+            // Close if dragged more than 80px down, otherwise snap back
             if (deltaY > 80) {
                 closeSidebar();
             } else {
@@ -287,110 +520,149 @@
             }
         });
 
+        /**
+         * Close sidebar and reset map view
+         * Clears state selection and returns to default view
+         */
         function closeSidebar() {
             sidebar.classList.remove('active');
             setTimeout(() => { sidebar.style.transform = ''; }, 300);
 
-            // CLEAR THE HIGHLIGHT
+            // Clear the highlighted state
             if (selectedLayer) {
                 geojson.resetStyle(selectedLayer);
                 selectedLayer = null;
             }
 
+            // Reset map to default view (adjusted for mobile/desktop)
             if (window.innerWidth <= 768) {
-                map.flyTo([22.5, 82], 4);
+                map.flyTo([22.5, 82], 4);  // Mobile: zoom out more for better overview
             } else {
-                map.flyTo([22.5, 82], 5);
+                map.flyTo([22.5, 82], 5);  // Desktop: standard zoom level
             }
         }
 
 
-        // --- 5. MAP INTERACTION (FIXED HIGHLIGHT LOGIC) ---
+        // --- 5. MAP INTERACTION HANDLERS ---
+        // Handle user interactions with state polygons
 
-        // This runs on Hover (Desktop) or Touch Start (Mobile)
-        // We only apply temporary style if it's NOT the selected layer
+        /**
+         * Highlight state on hover (desktop) or touch (mobile)
+         * Only applies if state is not currently selected
+         * @param {object} e - Leaflet event object
+         */
         function highlightFeature(e) {
             var layer = e.target;
+            // Only highlight if this is not the currently selected layer
             if (layer !== selectedLayer) {
-                layer.setStyle({ weight: 3, color: '#fff', fillOpacity: 0.5 });
-                layer.bringToFront();
+                layer.setStyle({ 
+                    weight: 3,           // Thicker border
+                    color: '#fff',       // White border
+                    fillOpacity: 0.5     // More opaque fill
+                });
+                layer.bringToFront(); // Ensure state appears above others
             }
         }
 
-        // This runs on Mouse Out
-        // IMPORTANT: Do NOT reset style if this layer is the 'selectedLayer'
+        /**
+         * Reset state styling when mouse leaves (desktop)
+         * Preserves highlighting for selected state
+         * @param {object} e - Leaflet event object
+         */
         function resetHighlight(e) {
             var layer = e.target;
+            // IMPORTANT: Don't reset style if this is the selected layer
             if (layer !== selectedLayer) {
-                geojson.resetStyle(layer);
+                geojson.resetStyle(layer); // Return to default style
             }
         }
 
-        // This runs on Click
+        /**
+         * Handle state selection and zoom
+         * Opens sidebar with state information and focuses map view
+         * @param {object} e - Leaflet event object
+         */
         function zoomToFeature(e) {
             var layer = e.target;
             let name = layer.feature.properties.NAME_1 || layer.feature.feature.properties.st_nm;
 
-            // Name Normalization
+            // Normalize state names to match politicalData keys
             if(name === "Orissa") name = "Odisha";
             if(name === "Uttaranchal") name = "Uttarakhand";
             if(name === "NCT of Delhi") name = "Delhi";
             if(name === "Jammu & Kashmir") name = "Jammu and Kashmir";
 
-            // 1. Reset the OLD selection (if any)
+            // Step 1: Reset previous selection styling
             if (selectedLayer && selectedLayer !== layer) {
                 geojson.resetStyle(selectedLayer);
             }
 
-            // 2. Set the NEW selection
+            // Step 2: Set new selection and apply persistent highlighting
             selectedLayer = layer;
-            // Force Highlighting (Locked)
-            selectedLayer.setStyle({ weight: 3, color: '#fff', fillOpacity: 0.5 });
+            selectedLayer.setStyle({ 
+                weight: 3,           // Highlighted border
+                color: '#fff',       // White border color
+                fillOpacity: 0.5     // More visible fill
+            });
             selectedLayer.bringToFront();
 
-
-            // 3. Zoom Logic
+            // Step 3: Zoom to selected state with responsive padding
             const isMobile = window.innerWidth <= 768;
+            // On mobile, add bottom padding to account for bottom sheet sidebar
             const paddingOptions = isMobile
                 ? { paddingBottomRight: [0, window.innerHeight * 0.35] }
                 : { padding: [50, 50] };
 
+            // Smoothly fly to state bounds
             map.flyToBounds(layer.getBounds(), {
                 ...paddingOptions,
-                duration: 1.2
+                duration: 1.2  // Animation duration in seconds
             });
 
+            // Step 4: Update and show sidebar with state data
             updateSidebar(name);
-
-            sidebar.style.transform = '';
-            sidebar.classList.add('active');
+            sidebar.style.transform = '';  // Reset any drag transforms
+            sidebar.classList.add('active'); // Trigger sidebar animation
         }
 
+        /**
+         * Attach event listeners to each state feature
+         * @param {object} feature - GeoJSON feature
+         * @param {object} layer - Leaflet layer
+         */
         function onEachFeature(feature, layer) {
             let name = feature.properties.NAME_1 || feature.properties.st_nm;
 
+            // Register interaction handlers
             layer.on({
-                mouseover: highlightFeature,
-                mouseout: resetHighlight,
-                click: zoomToFeature
+                mouseover: highlightFeature,  // Highlight on hover
+                mouseout: resetHighlight,     // Reset on mouse leave
+                click: zoomToFeature          // Select and zoom on click
             });
 
+            // Add tooltip showing state name
             if (name) {
                 layer.bindTooltip(name, {
-                    permanent: false,
-                    direction: "center",
-                    className: "glass-tooltip"
+                    permanent: false,         // Only show on hover
+                    direction: "center",      // Center tooltip on state
+                    className: "glass-tooltip" // Apply custom styling
                 });
             }
         }
 
+        /**
+         * Update sidebar content with state political data
+         * @param {string} stateName - Name of selected state
+         */
         function updateSidebar(stateName) {
             const data = politicalData[stateName];
-            if (!data) return;
+            if (!data) return; // Exit if state data not found
 
+            // Determine badge styling based on alliance code
             let badgeClass = data.code === 'N' ? 'badge-nda' : data.code === 'I' ? 'badge-india' : 'badge-other';
             let allianceName = data.code === 'N' ? 'NDA (Ruling)' : data.code === 'I' ? 'INDIA Bloc' : 'Regional / Ind.';
 
+            // Build HTML content for sidebar
             const html = `
                 <span class="state-badge ${badgeClass}">${allianceName}</span>
                 <h2 class="sidebar-title">${stateName}</h2>
@@ -409,24 +681,97 @@
                     <div class="seat-count">${data.seats}</div>
                 </div>
             `;
+            // Inject HTML into sidebar
             document.getElementById('sidebar-content').innerHTML = html;
         }
 
-        // Close on Background Click
+        // --- 6. BACKGROUND CLICK HANDLER ---
+        // Close sidebar when clicking on map background (not on a state)
         map.on('click', function(e) {
              if (e.originalEvent.target.id === 'map') {
                  closeSidebar();
              }
         });
 
+        // --- 7. LOAD GEOJSON DATA ---
+        // Fetch India states GeoJSON and render on map
         fetch('https://raw.githubusercontent.com/geohacker/india/master/state/india_telengana.geojson')
             .then(res => res.json())
             .then(data => {
                 geojson = L.geoJson(data, {
-                    style: style,
-                    onEachFeature: onEachFeature
+                    style: style,                // Apply color coding
+                    onEachFeature: onEachFeature // Attach interaction handlers
                 }).addTo(map);
             });
+
+        // ========================================
+        // SYSTEM REGISTRY MODULE
+        // Hidden overlay activated by key combination
+        // ========================================
+
+        const registry = document.getElementById('system-registry');
+        const keysPressed = {}; // Track currently pressed keys
+        let registryTimer = null; // Timer for hold duration
+
+        /**
+         * Track key press events
+         * Activates registry when C+O+2 held for 2 seconds
+         */
+        document.addEventListener('keydown', (e) => {
+            // Track pressed key (case-insensitive)
+            keysPressed[e.key.toLowerCase()] = true;
+
+            // Check for magic combination: c + o + 2
+            if (keysPressed['c'] && keysPressed['o'] && keysPressed['2']) {
+                if (!registryTimer) {
+                    // Start 2-second hold timer
+                    registryTimer = setTimeout(() => {
+                        openRegistry();
+                    }, 2000); // Requires 2 second hold
+                }
+            }
+
+            // Allow Escape key to close registry
+            if (e.key === 'Escape') closeRegistry();
+        });
+
+        /**
+         * Track key release events
+         * Cancels registry activation if keys released early
+         */
+        document.addEventListener('keyup', (e) => {
+            delete keysPressed[e.key.toLowerCase()];
+
+            // If any key in the combo is released before 2s, cancel timer
+            if (registryTimer) {
+                clearTimeout(registryTimer);
+                registryTimer = null;
+            }
+        });
+
+        /**
+         * Open system registry overlay
+         * Displays system information and modules
+         */
+        function openRegistry() {
+            registry.style.display = 'flex';
+            // Delay to allow display:flex to apply before opacity transition
+            requestAnimationFrame(() => {
+                registry.classList.add('visible');
+            });
+        }
+
+        /**
+         * Close system registry overlay
+         * Smoothly fades out before hiding
+         */
+        function closeRegistry() {
+            registry.classList.remove('visible');
+            // Wait for fade-out animation to complete
+            setTimeout(() => {
+                registry.style.display = 'none';
+            }, 300); // Match CSS transition duration
+        }
 
     </script>
 </body>
